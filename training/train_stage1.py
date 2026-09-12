@@ -195,13 +195,8 @@ def main() -> None:
     model = build_apex(args.size, use_rag=False).to(device)
     n_param = sum(p.numel() for p in model.parameters())
 
-    n_gpu = torch.cuda.device_count() if device == "cuda" else 0
-    if n_gpu > 1:
-        model = torch.nn.DataParallel(model)
-
-    gpu_names = " + ".join(torch.cuda.get_device_name(i) for i in range(n_gpu)) if n_gpu else ""
-    print(f"eszköz: {device}" + (f" ({gpu_names})" if gpu_names else ""))
-    print(f"GPU-k: {n_gpu}")
+    print(f"eszköz: {device}"
+          + (f" ({torch.cuda.get_device_name(0)})" if device == "cuda" else ""))
     print(f"modell: {n_param/1e6:.2f}M paraméter, vocab={cfg.vocab_size}")
 
     data = PackedTokens(args.tokens)
@@ -253,7 +248,7 @@ def main() -> None:
             x, y = make_xy(next(gen), device)
             with torch.amp.autocast("cuda", dtype=torch.float16, enabled=amp):
                 out = model(x, labels=y)
-                loss = out["loss"].mean() + cfg.moe_aux_loss_weight * out["moe_aux_loss"].mean()
+                loss = out["loss"] + cfg.moe_aux_loss_weight * out["moe_aux_loss"]
             scaler.scale(loss).backward()
             scaler.step(opt); scaler.update(); opt.zero_grad(set_to_none=True)
         if device == "cuda":
@@ -264,7 +259,7 @@ def main() -> None:
             x, y = make_xy(next(gen), device)
             with torch.amp.autocast("cuda", dtype=torch.float16, enabled=amp):
                 out = model(x, labels=y)
-                loss = out["loss"].mean() + cfg.moe_aux_loss_weight * out["moe_aux_loss"].mean()
+                loss = out["loss"] + cfg.moe_aux_loss_weight * out["moe_aux_loss"]
             scaler.scale(loss).backward()
             scaler.step(opt); scaler.update(); opt.zero_grad(set_to_none=True)
             n_steps += 1
@@ -301,10 +296,10 @@ def main() -> None:
             x, y = make_xy(next(gen), device)
             with torch.amp.autocast("cuda", dtype=torch.float16, enabled=amp):
                 out = model(x, labels=y)
-                loss = out["loss"].mean() + cfg.moe_aux_loss_weight * out["moe_aux_loss"].mean()
+                loss = out["loss"] + cfg.moe_aux_loss_weight * out["moe_aux_loss"]
             scaler.scale(loss / args.accum).backward()
             seen += x.numel()
-            running.append(float(out["loss"].mean().detach()))
+            running.append(float(out["loss"].detach()))
 
         scaler.unscale_(opt)
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -328,14 +323,12 @@ def main() -> None:
 
         if (step + 1) % args.ckpt_every == 0:
             path = ckpt_dir / "last.pt"
-            m = model.module if isinstance(model, torch.nn.DataParallel) else model
-            torch.save({"model": m.state_dict(), "opt": opt.state_dict(),
+            torch.save({"model": model.state_dict(), "opt": opt.state_dict(),
                         "sched": sched.state_dict(), "scaler": scaler.state_dict(),
                         "step": step + 1, "row": 0, "cfg": vars(cfg)}, path)
             print(f"  >> mentve: {path} ({step+1})", flush=True)
 
-    m = model.module if isinstance(model, torch.nn.DataParallel) else model
-    torch.save({"model": m.state_dict(), "step": args.steps,
+    torch.save({"model": model.state_dict(), "step": args.steps,
                 "cfg": vars(cfg)}, ckpt_dir / "final.pt")
     print("kész")
 
