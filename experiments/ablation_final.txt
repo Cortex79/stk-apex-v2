@@ -1,0 +1,50 @@
+
+Ablation — rekurrens mélység vs paraméter
+lépés=2000  batch=32  lr=0.003  szál=4
+
+  [recall]  (véletlen szint: 10.0%)
+    A: 6 blokk x 1 iter  — baseline
+      -> pontosság  41.8%   1.258M param   169s
+
+    B: 2 blokk x 3 iter  — 1/3 param, azonos mélység
+      -> pontosság  78.5%   0.433M param   161s
+
+    C: 6 blokk x 3 iter  — iso-param, 3x mélység
+      -> pontosság  41.0%   1.258M param   466s
+
+
+========================================================================
+feladat  kar      param  pontosság  vs véletlen     idõ
+------------------------------------------------------------------------
+recall   A       1.258M      41.8%        35.3%    169s
+recall   B       0.433M      78.5%        76.1%    161s
+recall   C       1.258M      41.0%        34.5%    466s
+========================================================================
+
+[recall]  B/A: 0.34x param, +36.7pp pontosság  ->  a rekurrencia HELYETTESÍTI a paramétert
+[recall]  C/A: iso-param, -0.8pp  ->  nincs érdemi nyereség
+
+Ablation — rekurrens mélység vs paraméter
+lépés=600  batch=32  lr=0.003  szál=4
+
+  [dyck]  (véletlen szint: 25.0%)
+    A: 6 blokk x 1 iter  — baseline
+      -> pontosság  84.0%   1.256M param   410s
+
+    B: 2 blokk x 3 iter  — 1/3 param, azonos mélység
+      -> pontosság  82.8%   0.431M param   405s
+
+    C: 6 blokk x 3 iter  — iso-param, 3x mélység
+      -> pontosság  86.7%   1.256M param   1223s
+
+
+========================================================================
+feladat  kar      param  pontosság  vs véletlen     idõ
+------------------------------------------------------------------------
+dyck     A       1.256M      84.0%        78.6%    410s
+dyck     B       0.431M      82.8%        77.1%    405s
+dyck     C       1.256M      86.7%        82.3%   1223s
+========================================================================
+
+[dyck]  B/A: 0.34x param, -1.2pp pontosság  ->  a rekurrencia HELYETTESÍTI a paramétert
+[dyck]  C/A: iso-param, +2.7pp  ->  a compute többletképességet vásárol

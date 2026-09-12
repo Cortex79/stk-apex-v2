@@ -1,0 +1,10 @@
+
+Kalibráció — A kar, 800 lépés, bs=32
+feladat  beállítás                           véletlen    A kar  sáv
+------------------------------------------------------------------------
+recall   {'n_pairs': 4, 'n_keys': 10, 'n_vals': 10}     10.0%    43.4%  gyenge
+recall   {'n_pairs': 4, 'n_keys': 14, 'n_vals': 14}      7.1%    32.4%  gyenge
+recall   {'n_pairs': 5, 'n_keys': 10, 'n_vals': 10}     10.0%    35.5%  gyenge
+dyck     {'length': 64, 'n_types': 3}           33.3%    92.6%  PLAFON
+dyck     {'length': 96, 'n_types': 4}           25.0%    89.1%  HASZNALHATO
+dyck     {'length': 128, 'n_types': 4}          25.0%    86.7%  HASZNALHATO
